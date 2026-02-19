@@ -1,0 +1,173 @@
+<script>
+    import { enhance } from '$app/forms';
+    import { invalidateAll } from '$app/navigation';
+
+    let { data } = $props();
+
+    let editingId = $state(null);
+    let deleteError = $state('');
+
+    function edit(id) {
+        editingId = id;
+        deleteError = '';
+    }
+
+    function cancel() {
+        editingId = null;
+        deleteError = '';
+    }
+
+    function enhanced() {
+        return async ({ result }) => {
+            if (result?.type === 'success') {
+                deleteError = '';
+                editingId = null;
+                await invalidateAll();
+            }
+
+            if (result?.type === 'failure') {
+                deleteError = result.data?.errors?.general || 'Operation failed';
+            }
+        };
+    }
+</script>
+
+<h3>Categories</h3>
+
+{#if deleteError}
+    <div class="alert alert-danger">{deleteError}</div>
+{/if}
+
+<table class="table table-bordered w-75">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {#each data.prodCategories as category (category.id)}
+            <tr>
+                <td>{category.id}</td>
+
+                <td>
+                    {#if editingId === category.id}
+                        <input
+                            class="form-control"
+                            name="catName"
+                            form={`edit-${category.id}`}
+                            value={category.name}
+                            required
+                        />
+                    {:else}
+                        {category.name}
+                    {/if}
+                </td>
+
+                <td>
+                    {#if editingId === category.id}
+                        <input
+                            class="form-control"
+                            name="catDesc"
+                            form={`edit-${category.id}`}
+                            value={category.description}
+                            required
+                        />
+                    {:else}
+                        {category.description}
+                    {/if}
+                </td>
+
+                <td>
+                    {#if editingId === category.id}
+                        <form
+                            id={`edit-${category.id}`}
+                            method="POST"
+                            action="?/updateCategory"
+                            use:enhance={enhanced}
+                            class="d-inline"
+                        >
+                            <input type="hidden" name="catId" value={category.id} />
+                            <button type="submit" class="btn btn-sm btn-success">✓</button>
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-secondary ms-1"
+                                onclick={cancel}
+                            >
+                                ✕
+                            </button>
+                        </form>
+                    {:else}
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-primary"
+                            onclick={() => edit(category.id)}
+                        >
+                            ✎
+                        </button>
+
+                        <form
+                            method="POST"
+                            action="?/deleteCategory"
+                            use:enhance={enhanced}
+                            class="d-inline"
+                        >
+                            <input type="hidden" name="catId" value={category.id} />
+                            <button
+                                type="submit"
+                                class="btn btn-sm btn-outline-danger ms-1"
+                                onclick={(e) => {
+                                    if (!confirm('Delete this category?')) {
+                                        e.preventDefault();
+                                    }
+                                }}
+                            >
+                                🗑
+                            </button>
+                        </form>
+                    {/if}
+                </td>
+            </tr>
+        {/each}
+
+        <!-- ADD NEW CATEGORY -->
+        <tr>
+            <td>new</td>
+            <td>
+                <input
+                    class="form-control"
+                    name="catName"
+                    form="create-category"
+                    required
+                />
+            </td>
+            <td>
+                <input
+                    class="form-control"
+                    name="catDesc"
+                    form="create-category"
+                    required
+                />
+            </td>
+            <td>
+                <form
+                    id="create-category"
+                    method="POST"
+                    action="?/createCategory"
+                    use:enhance={async ({ result }) => {
+                        if (result?.type === 'success') {
+                            newName.value = '';
+                            newDesc.value = '';
+                            await invalidateAll();
+                        }
+                    }}
+                >
+                    <button type="submit" class="btn btn-sm btn-success">+</button>
+                </form>
+            </td>
+        </tr>
+    </tbody>
+</table>
