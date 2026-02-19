@@ -29,6 +29,9 @@
 					<li class="nav-item">
 						<a class="nav-link" href="/admin/orders"><i class="bi bi-receipt me-1"></i>Orders</a>
 					</li>
+                    <li class="nav-item">
+						<a class="nav-link" href="/admin/users"><i class="bi bi-people me-1"></i>Users</a>
+					</li>
                     <li class="nav-item dropdown">
                         <button class="nav-link dropdown-toggle btn btn-link" type="button" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle me-1"></i>{data.user.firstname} ({data.user.role})
