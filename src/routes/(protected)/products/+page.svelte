@@ -6,10 +6,6 @@
     // get data that was returned when the page was loaded
     let { data } = $props();
     
-    // get the product and category data
-    let allProducts = $derived(data.products);
-    let categories = $derived(data.categories);
-    
     // used to keep track of which category the user selected
     let selectedCatId = $state(null);
 
@@ -17,15 +13,15 @@
     // $derived is fine for simple one-signal cases.
     // This variable either has all products or those for a category
     let products = $derived.by(() => {
-        if (selectedCatId === null) return allProducts;
-        return allProducts.filter(
-            prod => prod.categoryId == selectedCatId
+        if (selectedCatId === null) return data.products;
+        return data.products.filter(
+            prod => prod.categoryId === selectedCatId
         );
     });
 
     // selectedCatId = the category id the user clicked on 
     function filterByCat(catId) {
-        selectedCatId = catId;
+        selectedCatId = catId === null ? null : Number(catId);
     }
 
     // The number is stored without decimal places, so format it.
@@ -85,12 +81,15 @@
     // - On success: close modal
     // - On failure: keep modal open and show the error message
     function enhanceDeleteModal() {
-        return async ({ result }) => {
+        return async ({ result, update }) => {
             if (!result) return;
 
             if (result.type === 'success') {
                 // Close FIRST so UI updates immediately
                 closeDeleteModal();
+
+                // This re-runs the page load and refreshes `data`
+                await update();
             }
 
             if (result.type === 'failure') {
@@ -118,9 +117,9 @@
                     All
                 </button>
 
-                {#each categories as cat}
+                {#each data.categories as cat}
 				    <button
-                        class="list-group-item list-group-item-action {(selectedCatId === cat.id) ? 'active' : ''}"
+                        class="list-group-item list-group-item-action {(selectedCatId === Number(cat.id)) ? 'active' : ''}"
                         onclick={() => filterByCat(cat.id)}
                     >
                         {cat.name}
@@ -143,7 +142,7 @@
                 <div transition:slide={{ duration: 400 }}>
                     <ProductForm
                         {product}
-                        {categories}
+                        categories={data.categories}
                         onCancel={() => {
                             showForm = false;
                             product = null;
@@ -171,7 +170,7 @@
 
                 <tbody>
                     <!-- iterate over products, adding a new table row for each product -->
-                    {#each products as product}
+                    {#each products as product (product.id)}
                         <tr>
                             <td>{product.id}</td>
                             <td><a href={`/products/${product.id}`}>{product.name}</a></td>
@@ -186,7 +185,7 @@
                                 />
                             </td>
                             <td>{product.quantity}</td>
-                            <td>{categories.find(cat => cat.id === product.categoryId)?.name ?? 'Unknown'}</td> 
+                            <td>{data.categories.find(cat => cat.id === product.categoryId)?.name ?? 'Unknown'}</td> 
 
                             <td>
                                 <button
@@ -198,24 +197,15 @@
                                     <i class="bi bi-pencil"></i>
                                 </button>
 
-                                <!-- Minimal form for delete -->
                                 <!-- NOTE: the button is type="button" so it does NOT submit here -->
-                                <form
-                                    method="POST"
-                                    action="?/deleteProduct"
-                                    use:enhance
-                                    class="d-inline"
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    aria-label="Delete"
+                                    onclick={() => openDeleteModal(product)}
                                 >
-                                    <input type="hidden" name="prodId" value={product.id} />
-                                    <button
-                                        type="button"
-                                        class="btn btn-sm btn-outline-danger"
-                                        aria-label="Delete"
-                                        onclick={() => openDeleteModal(product)}
-                                    >
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </td>
                         </tr>
                     {/each}

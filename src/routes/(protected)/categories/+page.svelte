@@ -1,14 +1,6 @@
 <script>
     // get data that was returned when the page was loaded
     let { data } = $props();
-    
-    // get the location data
-    let categories = $state(data.prodCategories);
-
-    // Svelte 5 introduces $inspect(), which is for debugging reactive state.
-    // this is instead of console.log
-    //$inspect(categories);
-
 </script>
 
 <h3>Categories</h3>
@@ -24,7 +16,7 @@
         </thead>
         <tbody>
             <!-- iterate over categories, adding a new table row for each category -->
-            {#each categories as category}
+            {#each data.categories as category}
                 <tr>
                     <td>{category.id}</td>
                     <td>{category.name}</td>
