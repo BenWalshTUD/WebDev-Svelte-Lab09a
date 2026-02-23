@@ -16,6 +16,19 @@ export async function load() {
     }
 }
 
+// Zod Errors
+// If validation fails (checked by Zod), it throws a ZodError.
+// We extract the field-specific messages and send them back to the page
+// so the user can see what input was invalid instead of a server error.
+function zodToFieldErrors(err) {
+	const errors = {};
+	err.issues.forEach((e) => {
+		const field = e.path[0]?.toString();
+		if (field) errors[field] = e.message;
+	});
+	return errors;
+}
+
 export const actions = {
     createCategory: async ({ request }) => {
         try {
@@ -33,17 +46,8 @@ export const actions = {
         } catch (err) {
             console.error('Error creating category:', err);
 
-            // If validation fails (checked by Zod), it throws a ZodError.
-            // We extract the field-specific messages and send them back to the page
-            // so the user can see what input was invalid instead of a server error.
-            if (err instanceof ZodError) {
-                const errors = {};
-                err.issues.forEach(e => {
-                    const field = e.path[0]?.toString();
-                    if (field) errors[field] = e.message;
-                });
-                return fail(400, { errors });
-            }
+            // Check for Zod Errors
+            if (err instanceof ZodError) return fail(400, { errors: zodToFieldErrors(err) });
 
             return fail(500, {
                 errors: { general: 'Failed to create category' }
@@ -68,15 +72,8 @@ export const actions = {
         } catch (err) {
             console.error('Error updating category:', err);
 
-            // Zod validation error → return user input errors (not a server error)
-            if (err instanceof ZodError) {
-                const errors = {};
-                err.issues.forEach(e => {
-                    const field = e.path[0]?.toString();
-                    if (field) errors[field] = e.message;
-                });
-                return fail(400, { errors });
-            }
+            // Check for Zod Errors
+            if (err instanceof ZodError) return fail(400, { errors: zodToFieldErrors(err) });
 
             return fail(500, {
                 errors: { general: 'Failed to update category' }
@@ -95,17 +92,8 @@ export const actions = {
         } catch (err) {
             console.error('Error deleting category:', err);
 
-            // Zod validation error → return user input errors (not a server error)
-            if (err instanceof ZodError) {
-                const errors = {};
-                err.issues.forEach((error) => {
-                    const field = error.path[0]?.toString();
-                    if (field) {
-                        errors[field] = error.message;
-                    }
-                });
-                return fail(400, { errors });
-            }
+            // Check for Zod Errors
+            if (err instanceof ZodError) return fail(400, { errors: zodToFieldErrors(err) });
 
             // Drizzle errors can be nested; check both err and err.cause
             const code = err?.cause?.code || err?.code || '';
