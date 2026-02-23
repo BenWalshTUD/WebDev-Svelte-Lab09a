@@ -2,6 +2,7 @@ import { authService } from '$lib/server/services/auth-service.js';
 import { fail, redirect } from '@sveltejs/kit';
 import { ZodError } from 'zod';
 import { AuthenticationError } from '$lib/server/utils/errors.js';
+import * as auth from '$lib/server/auth';
 
 export async function load({ locals }) {
 	if (locals.user) throw redirect(302, '/account');
@@ -9,24 +10,21 @@ export async function load({ locals }) {
 }
 
 export const actions = {
-	login: async ({ request, locals, cookies }) => {
+	login: async (event) => {
 		try {
-			const formData = await request.formData();
+			const formData = await event.request.formData();
 			const username = formData.get('username');
 			const password = formData.get('password');
 
 			const { user, session, sessionToken } = await authService.login(username, password);
 
-			cookies.set('auth-session', sessionToken, {
-				path: '/',
-				expires: session.expiresAt
-			});
+			// Uses your helper so cookie name/options are centralized
+			auth.setSessionTokenCookie(event, sessionToken, session.expiresAt);
 
-			locals.user = user;
-			locals.session = session;
+			event.locals.user = user;
+			event.locals.session = session;
 
 			return { success: true };
-
 		} catch (err) {
 			console.error('Login error:', err);
 

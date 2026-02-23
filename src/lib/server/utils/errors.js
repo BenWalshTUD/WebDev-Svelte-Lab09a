@@ -1,53 +1,58 @@
-import { ZodError } from 'zod';
+  import { ZodError } from 'zod';
 
-export class ValidationError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'ValidationError';
-  }
-}
-
-export class NotFoundError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'NotFoundError';
-  }
-}
-
-export class ForbiddenError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'ForbiddenError';
-  }
-}
-
-// Added when adding Lucia - Authentication
-export class AuthenticationError extends Error {
-  constructor(message = 'Authentication failed') {
-    super(message);
-    this.name = 'AuthenticationError';
-  }
-}
-
-export function handleError(error) {
-  if (error instanceof ZodError) {
-    return {
-      status: 400,
-      message: error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
-    };
+  export class ValidationError extends Error {
+    constructor(message) {
+      super(message);
+      this.name = 'ValidationError';
+    }
   }
 
-  if (error instanceof ValidationError) {
-    return { status: 400, message: error.message };
+  export class NotFoundError extends Error {
+    constructor(message) {
+      super(message);
+      this.name = 'NotFoundError';
+    }
   }
 
-  if (error instanceof NotFoundError) {
-    return { status: 404, message: error.message };
+  export class ForbiddenError extends Error {
+    constructor(message) {
+      super(message);
+      this.name = 'ForbiddenError';
+    }
   }
 
-  if (error instanceof ForbiddenError) {
-    return { status: 403, message: error.message };
+  // Added when adding Lucia - Authentication
+  export class AuthenticationError extends Error {
+    constructor(message = 'Authentication failed') {
+      super(message);
+      this.name = 'AuthenticationError';
+    }
   }
 
-  return { status: 500, message: 'Internal server error' };
-}
+  export function handleError(error) {
+    if (error instanceof ZodError) {
+      return {
+        status: 400,
+        message: error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+      };
+    }
+
+    if (error instanceof ValidationError) {
+      return { status: 400, message: error.message };
+    }
+
+    // Added when adding Lucia - Authentication
+    if (error instanceof AuthenticationError) {
+      return { status: 401, message: error.message };
+    }
+
+    if (error instanceof NotFoundError) {
+      return { status: 404, message: error.message };
+    }
+
+    if (error instanceof ForbiddenError) {
+      return { status: 403, message: error.message };
+    }
+
+    return { status: 500, message: 'Internal server error' };
+  }

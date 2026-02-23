@@ -1,8 +1,10 @@
-// utils/permissions.js
-import { ForbiddenError } from './errors.js';
+import { AuthenticationError, ForbiddenError } from '$lib/server/utils/errors.js';
+
+export function requireAuth(user) {
+	if (!user) throw new AuthenticationError('You must be logged in');
+}
 
 export function requireAdmin(user) {
-  if (!user || user.role !== 'admin') {
-    throw new ForbiddenError('Admin privileges required');
-  }
+	requireAuth(user);
+	if (user.role !== 'admin') throw new ForbiddenError('Admin privileges required');
 }

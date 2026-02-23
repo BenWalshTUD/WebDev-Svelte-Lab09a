@@ -10,7 +10,7 @@ export const selectUserSchema = createSelectSchema(user);
 
 export const insertUserSchema = createInsertSchema(user, {
   username: z.string().min(2, 'Username must be at least 2 characters'),
-  passwordHash: z.string().min(6, 'Password is required'),
+  passwordHash: z.string().min(30, 'Password hash is required'),
   firstname: z.string().min(1, 'Firstname is required'),
   surname: z.string().min(1, 'Surname is required'),
   dob: z.string().min(1, 'Date of birth is required'),
@@ -26,7 +26,7 @@ export const updateUserSchema = insertUserSchema
 });
 
 export const deleteUserSchema = z.object({
-  id: z.number().int().positive()
+  id: z.coerce.number().int().positive()
 });
 
 /** =========================
@@ -113,4 +113,26 @@ export const updateOrderDetailSchema = insertOrderDetailSchema
 
 export const deleteOrderDetailSchema = z.object({
   id: z.number().int().positive()
+});
+
+
+/** =========================
+ * Admin User Form Schemas
+ * ========================= */
+
+// For admin create user form (plaintext password)
+export const adminCreateUserSchema = z.object({
+  username: z.string().min(2, 'Username must be at least 2 characters'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  firstname: z.string().min(1, 'Firstname is required'),
+  surname: z.string().min(1, 'Surname is required'),
+  dob: z.string().min(1, 'Date of birth is required'),
+  email: z.string().email('Must be a valid email'),
+  role: z.enum(['user', 'admin']).default('user')
+});
+
+// For admin password reset form
+export const adminResetPasswordSchema = z.object({
+  id: z.coerce.number().int().positive(),
+  password: z.string().min(6, 'Password must be at least 6 characters')
 });
